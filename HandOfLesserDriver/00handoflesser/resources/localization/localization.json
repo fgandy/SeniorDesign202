@@ -1,0 +1,9 @@
+[
+  {
+    "language_tag": "en_US",
+    "handoflesser" : "Hand Of Lesser Controller",
+
+    "/input/a" : "A button",
+    "/input/trigger": "Trigger"
+  }
+]

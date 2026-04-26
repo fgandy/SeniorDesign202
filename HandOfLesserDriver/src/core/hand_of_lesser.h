@@ -1,0 +1,104 @@
+#pragma once
+#include <array>
+#include <thread>
+#include <unordered_map>
+#include <HandOfLesserCommon.h>
+#include "src/controller/emulated_controller_driver.h"
+#include "src/controller/hooked_controller.h"
+#include "src/tracker/emulated_tracker_driver.h"
+
+namespace HOL
+{
+
+	class HandOfLesser
+	{
+	public:
+		HandOfLesser();
+		void init();
+		void cleanup();
+		void runFrame();
+		void addEmulatedControllers();
+		void removeEmulatedControllers();
+		void destroyEmulatedControllers();
+		void addEmulatedTrackers();
+		void removeEmulatedTrackers();
+		void updateTrackerConnectionStates();
+		HookedController* addHookedController(uint32_t id,
+											  vr::IVRServerDriverHost* host,
+											  vr::ITrackedDeviceServerDriver* driver,
+											  vr::PropertyContainerHandle_t propertyContainer);
+
+		void removeDuplicateDevices();
+
+		bool shouldPossess(uint32_t deviceId);
+		bool shouldPossess(HookedController* controller);
+
+		bool shouldEmulateControllers();
+		static HandOfLesser* Current; // Time to commit sins
+		static HOL::settings::HandOfLesserSettings Config;
+
+		EmulatedControllerDriver* getEmulatedController(HOL::HandSide side);
+		bool isEmulatedController(vr::ITrackedDeviceServerDriver* driver);
+		bool isEmulatedTracker(vr::ITrackedDeviceServerDriver* driver);
+		bool isShadowTracker(vr::ITrackedDeviceServerDriver* driver);
+		HookedController* getHookedController(HOL::HandSide side);
+		std::vector<HookedController*> getHookedControllers(HOL::HandSide side);
+		HookedController* getHookedControllerByDeviceId(uint32_t deviceId);
+		HookedController* getHookedControllerBySerial(std::string serial);
+		HookedController*
+		getHookedControllerByPropertyContainer(vr::PropertyContainerHandle_t container);
+		HookedController* getHMD();
+		HookedController*
+		getHookedControllerByInputHandle(vr::VRInputComponentHandle_t inputHandle);
+
+		// Returns the active controller if we are in a mode that modifies it and it is connected
+		// otherwise returns nullptr
+		GenericControllerInterface* GetActiveController(HOL::HandSide side);
+
+		void requestEstimateControllerSide();
+
+		float getControllerToHandDistance(HookedController* controller);
+		bool isHandTrackingPrimary(HOL::HandSide side);
+		bool shouldUseHandTracking(HookedController* controller);
+
+		HOL::MultimodalPosePacket mLastMultimodalPosePacket;
+		static HOL::state::TrackingState Tracking;
+		static HOL::state::RuntimeState Runtime;
+
+		void sendDeviceState(HookedController* device);
+		void sendAllDeviceStates();
+
+		// Shadow tracker management
+		void updateShadowTrackerState(HookedController* controller);
+		void updateShadowTrackerStates();
+		EmulatedTrackerDriver* getOrCreateShadowTracker(HookedController* controller);
+
+	private:
+		void ReceiveDataThread();
+		void estimateControllerSide();
+		void sendStatus();
+
+		bool mActive;
+		int mControllerSideEstimationAttemptCount = 0;
+
+		bool mEstimateControllerSideWhenPositionValid = false;
+
+		void handleConfigurationChange(HOL::settings::HandOfLesserSettings& newConfig);
+		void updateControllerConnectionStates(bool forceUpdate = false);
+
+		std::thread my_pose_update_thread_;
+		HOL::NamedPipeTransport mTransport;
+
+		std::array<EmulatedControllerDriver*, HOL::HandSide_MAX> mEmulatedControllers{};
+		std::array<std::array<std::unique_ptr<EmulatedControllerDriver>, HOL::HandSide_MAX>,
+				   HOL::EmulatedControllerProfile_MAX>
+			mAllEmulatedControllers;
+		std::vector<std::unique_ptr<HookedController>> mHookedControllers;
+		std::unordered_map<HOL::BodyTrackerRole, std::unique_ptr<EmulatedTrackerDriver>>
+			mEmulatedTrackers;
+		std::unordered_map<std::string, std::unique_ptr<EmulatedTrackerDriver>>
+			mShadowTrackers; // Keyed by source device serial
+		HOL::HandTransformPacket mLastHandTransforms[HOL::HandSide_MAX]{};
+		bool mHasHandTransform[HOL::HandSide_MAX]{false, false};
+	};
+} // namespace HOL
