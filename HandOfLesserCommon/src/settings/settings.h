@@ -1,0 +1,250 @@
+#pragma once
+
+#include <Eigen/Core>
+#include <Eigen/Geometry>
+#include <src/controller/controller.h>
+#include <map>
+#include <string>
+#include "openvr_driver.h"
+
+namespace HOL
+{
+	namespace settings
+	{
+		struct FingerBendSettings
+		{
+			// clang-format off
+			float commonCurlCenter[3] = {
+				50.3f, 
+				44.7f,
+				27.0f
+			};
+
+			float thumbCurlCenter[3] = {
+				20.1f, 
+				-2.1f, 
+				50.2f
+			};
+
+			float fingerSplayCenter[5] = {
+				2.8f,	// Index
+				-3.6f,
+				12.9f, 
+				16.2f, 
+				-18.2f		// Thumb
+			};
+
+			// Range values must match unity!
+			MotionRange commonCurlRange[3] = {
+				{-1.3, 1}, 
+				{-1, 1}, 
+				{-1, 1}
+			};
+			MotionRange thumbCurlRange[3] = {
+				{-4.1f, 0.4	}, 
+				{-0.5, 1.0	},
+				{-2, 1.27	}
+			};
+
+			MotionRange fingersplayRange[5] = {
+				{-2,	1	},	// Index
+				{-2,	1	},	// middle	
+				{-3,	1	},	// ring
+				{-3,	1.5f},	// little
+				{-2,	1.5f}	// thumb
+			};
+
+			// clang-format on
+
+			Eigen::Vector3f ThumbAxisOffset = Eigen::Vector3f(0, 0, -89);
+		};
+
+		struct SkeletalBendSettings
+		{
+			// clang-format off
+			// clang-format off
+			float commonCurlCenter[3] = {
+				7.0f, 
+				0.0f,
+				0.0f
+			};
+
+			float thumbCurlCenter[3] = {
+				-21.5f, 
+				-34.6f, 
+				2.5f
+			};
+
+			float fingerSplayCenter[5] = {
+				-2.5f,// Index
+				0.0f,
+				-4.5f,
+				-4.0f,
+				-5.5f		// Thumb
+			};
+
+
+			// Range values must match unity!
+			MotionRange commonCurlRange[3] = {
+				{30.f,  -100.f }, 
+				{30.f,  -100.f }, 
+				{30.f,  -100.f }
+			};
+			MotionRange thumbCurlRange[3] = {
+				{	75,	 -25.f		},
+				{	0,	-100.f   },			
+				{	25, -90.f	},
+			};
+			MotionRange fingersplayRange[5] = {
+				{-25.0f,  60.0f  }, // index
+				{-25.0f,  60.0f  },
+				{ -60.0f, 25.0f  },
+				{ -60.0f, 25.0f  },
+				{-40.0f,  40.0f   } // thumb
+			};
+
+			// clang-format on
+		};
+
+		struct GeneralSettings
+		{
+			int motionPredictionMS = 15; // ms
+			int updateIntervalMS = 1;
+			float linearVelocityMultiplier = 0.f;
+			float angularVelocityMultiplier = 0.f;
+			bool forceInactive = false;
+			int minTrackedJointsForQuality
+				= 26; // Minimum tracked joints to consider tracking valid
+		};
+
+		struct HandPoseSettings
+		{
+			// NoControllerMode should always be the default so the driver does nothing
+			// until the app connects.
+			HOL::ControllerMode controllerMode = (HOL::ControllerMode)3;
+			HOL::EmulatedControllerProfile emulatedControllerProfile
+				= HOL::EmulatedControllerProfile::EmulatedControllerProfile_Index;
+			Eigen::Vector3f orientationOffset = Eigen::Vector3f(0, 0, 0);
+			Eigen::Vector3f positionOffset = Eigen::Vector3f(0, 0, 0);
+		};
+
+		struct VRChatSettings
+		{
+			bool sendFull = false;
+			bool sendAlternating = false;
+			bool sendPacked = true;
+
+			bool interlacePacked = true;
+
+			// Should always be 100 except for testing
+			int packedUpdateInterval = 100;
+
+			// Modify splay to work with humanoid rig
+			bool useUnityHumanoidSplay = true;
+			// Values we can adjust to send curl/spray to vrchat
+			// without having to be in VR
+			bool sendDebugOsc = false;
+			bool alternateCurlTest = false; // flip between -1 and 1 every 100ms
+			float curlDebug = 0;
+			float splayDebug = 0;
+		};
+
+		struct VisualizerSettings
+		{
+			bool followLeftHand;
+			bool followRightHand;
+			bool showBodyTrackingPalmAxes = false;
+			bool showHandTrackingPalmAxes = false;
+			bool showBodyTrackerAxes = false;
+		};
+
+		struct DebugSettings
+		{
+			Eigen::Vector3f rotationFix = Eigen::Vector3f(0, 0, 0);
+			Eigen::Vector3f rotationOut = Eigen::Vector3f(0, 0, 0);
+		};
+
+		struct InputSettings
+		{
+			bool sendOscInput = true;
+		};
+
+		struct OpenXRSettings
+		{
+			std::string runtimeOverridePath;
+		};
+
+		struct SkeletalInput
+		{
+			SkeletalInputMode transmitMode = SkeletalInputMode_Unobstructed;
+			float jointLengthMultiplier = 1.05f;
+			bool augmentControllerSkeleton = false;
+			Eigen::Vector3f positionOffset = Eigen::Vector3f(-0.168f, -0.041f, 0.049f);
+			Eigen::Vector3f orientationOffset = Eigen::Vector3f(174.300f, 1.221f, 136.930f);
+		};
+
+		struct SteamVRSettings
+		{
+			bool sendSteamVRControllerPosition = true;
+			bool sendSteamVRInput = true;
+			bool transmitLegacyFingerCurl = true;
+			bool blockControllerInputWhileHandTracking = true;
+			float steamPoseTimeOffset = .0f;
+			bool forceInactive = false;
+			bool jitterLastPoseOnTrackingLoss = true;
+		};
+
+		struct BodyTrackerSettings
+		{
+			bool enableBodyTrackers = false;
+
+			// Individual tracker enables
+			bool enableHips = false;
+			bool enableChest = false;
+			bool enableLeftUpperArm = false;
+			bool enableLeftLowerArm = false;
+			bool enableRightUpperArm = false;
+			bool enableRightLowerArm = false;
+		};
+
+		struct DeviceConfig
+		{
+			std::string serial;
+			vr::ETrackedDeviceClass role = vr::TrackedDeviceClass_Invalid;
+			bool activatedThisSession = false; // Runtime flag, not saved to JSON
+
+			// Shadow tracker settings
+			bool actAsTracker = false; // Make this device appear as a tracker
+			bool alsoWhenHeld = false; // Act as tracker even when held (multimodal only)
+		};
+
+		struct DeviceSettings
+		{
+			std::map<std::string, DeviceConfig> devices;
+		};
+
+		struct TrackingFeaturesSettings
+		{
+			bool enableUpperBodyTracking = false;
+			bool enableSimultaneousTracking = false;
+		};
+
+		struct HandOfLesserSettings
+		{
+			GeneralSettings general;
+			FingerBendSettings fingerBend;
+			SkeletalBendSettings skeletalBend;
+			HandPoseSettings handPose;
+			VRChatSettings vrchat;
+			DebugSettings debug;
+			SteamVRSettings steamvr;
+			VisualizerSettings visualizer;
+			InputSettings input;
+			OpenXRSettings openxr;
+			SkeletalInput skeletal;
+			BodyTrackerSettings bodyTrackers;
+			DeviceSettings deviceSettings;
+			TrackingFeaturesSettings trackingFeatures;
+		};
+	} // namespace settings
+} // namespace HOL
